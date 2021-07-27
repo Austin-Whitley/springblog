@@ -6,10 +6,19 @@
 </head>
 <body>
     <h1>viewing all the posts</h1>
-    <ul th:each="post : ${posts}">
+
+    <th:block th:each="post : ${posts}">
         <h3 th:text="${post.title}"></h3>
         <p th:text="${post.body}"></p>
+        <form method="post" action="/post/edit">
+            <button name="editPost" th:value="${post.id}">Edit</button>
+        </form>
+<!--        refactor so the delete and edit buttons only show up on single post pages, not show all-->
+        <form method="post" action="/post/delete">
+            <button name="deletePost" th:value="${post.id}">Delete</button>
+        </form>
 
-    </ul>
+
+    </th:block>
 </body>
 </html>

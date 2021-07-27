@@ -1,58 +1,91 @@
 package com.codeup.springblog.controllers;
 
 import com.codeup.springblog.models.Post;
+import com.codeup.springblog.models.PostRepository;
+import com.codeup.springblog.models.User;
+import com.codeup.springblog.models.UserRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Controller
 public class PostController {
+    private final PostRepository postDao;
+    private final UserRepository userDao;
+
+    public PostController(PostRepository postDao, UserRepository userDao){
+        this.postDao = postDao;
+        this.userDao = userDao;
+    }
 
     @GetMapping("/posts")
     public String viewPosts(Model model){
-
-        Post p1 = new Post("Whats up with this weather?!", "It's been over 90 degrees for like a week now. When will this all end? I'm getting pretty sick of the heat.");
-        Post p2 = new Post("Rubber ducks", "I found this thrift store in town, and ill tell you what if, if you're into rubber ducks at all I would highly recommend checking it out. They have a sale going on right now buy 5 get 5 free! and the ducks are 50c a pop! What a steal!!");
-
-        List<Post> posts = new ArrayList<>();
-        posts.add(p1);
-        posts.add(p2);
-
-        model.addAttribute("posts", posts);
-
-        return "posts/index";
-    }
-
-    @GetMapping("/join")
-    public String showJoinForm(){
-        return "join";
-    }
-
-    @PostMapping("/join")
-    public String joinCohort(@RequestParam(name = "cohort") String cohort, Model model){
-        model.addAttribute("cohort", "Welcome to " + cohort + "!");
-        return "join";
-    }
-
-    @GetMapping("/posts/{id}")
-    @ResponseBody
-    public String viewPost(@PathVariable long id){
-        return "Viewing a post with the id of: " + String.valueOf(id);
+        model.addAttribute("posts", postDao.findAll());
+        return "/posts/index";
     }
 
     @GetMapping("/posts/create")
-    @ResponseBody
-    public String createPost(){
-        return "view the post forum.";
+    public String showCreateForm(Model model){
+        return "posts/create";
     }
 
-    @PostMapping("posts/create")
-    @ResponseBody
-    public String submitPost(){
-        return "Create a new post";
+    //create a post
+    @PostMapping("/posts/create")
+    public String createPost(@RequestParam String title, @RequestParam String body){
+        User user = userDao.getById(1L);
+        Post post = new Post(title, body, user);
+        postDao.save(post);
+        return "redirect:/posts";
     }
+
+    //postMapping for delete
+    @PostMapping("/post/delete")
+    public String deletePost(@RequestParam("deletePost") long id){
+        postDao.deleteById(id);
+        return "redirect:/posts";
+    }
+
+    //get the post
+    @GetMapping("post/edit")
+    public String editPost(@RequestParam("editPost") long id, Model model){
+        model.addAttribute("post", postDao.findById(id));
+        return "/posts/editPost";
+    }
+
+    @PostMapping("/post/edit")
+    public String editPost(@RequestParam("postId") long postId, @RequestParam("postTitle") String title, @RequestParam("postBody") String body){
+//        Post post = new Post(postId, title, body);
+//        postDao.save(post);
+        return "redirect:/posts";
+    }
+
+//    @GetMapping("/join")
+//    public String showJoinForm(){
+//        return "join";
+//    }
+//
+//    @PostMapping("/join")
+//    public String joinCohort(@RequestParam(name = "cohort") String cohort, Model model){
+//        model.addAttribute("cohort", "Welcome to " + cohort + "!");
+//        return "join";
+//    }
+
+//    @GetMapping("/posts/{id}")
+//    @ResponseBody
+//    public String viewPost(@PathVariable long id){
+//        return "Viewing a post with the id of: " + String.valueOf(id);
+//    }
+//
+//    @GetMapping("/posts/create")
+//    @ResponseBody
+//    public String createPost(){
+//        return "view the post forum.";
+//    }
+//
+//    @PostMapping("posts/create")
+//    @ResponseBody
+//    public String submitPost(){
+//        return "Create a new post";
+//    }
 
 }
