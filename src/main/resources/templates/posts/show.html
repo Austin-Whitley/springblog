@@ -5,6 +5,15 @@
     <title>Single Post</title>
 </head>
 <body>
-    <h1>Viewing one post</h1>
+    <h3 th:text="${post.title}"/>
+    <p th:text="${post.body}" />
+    <p th:text="${post.user.email}" />
+    <br/>
+    <form th:action="@{/posts/delete/{id}(id = ${post.id})}" method="post">
+        <button>Delete Post</button>
+    </form>
+    <form th:action="@{/posts/{id}/edit(id = ${post.id})}">
+        <button>Edit Post</button>
+    </form>
 </body>
 </html>

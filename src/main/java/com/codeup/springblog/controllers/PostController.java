@@ -4,6 +4,7 @@ import com.codeup.springblog.models.Post;
 import com.codeup.springblog.models.PostRepository;
 import com.codeup.springblog.models.User;
 import com.codeup.springblog.models.UserRepository;
+import com.codeup.springblog.services.EmailService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -12,80 +13,59 @@ import org.springframework.web.bind.annotation.*;
 public class PostController {
     private final PostRepository postDao;
     private final UserRepository userDao;
+    private final EmailService emailDao;
 
-    public PostController(PostRepository postDao, UserRepository userDao){
+    public PostController(PostRepository postDao, UserRepository userDao, EmailService emailDao){
         this.postDao = postDao;
         this.userDao = userDao;
+        this.emailDao = emailDao;
     }
 
     @GetMapping("/posts")
-    public String viewPosts(Model model){
+    public String viewPosts(Model model) {
         model.addAttribute("posts", postDao.findAll());
-        return "/posts/index";
+        return "posts/index";
     }
+
+    @GetMapping("/posts/{id}")
+    public String singlePost(@PathVariable long id, Model model) {
+        model.addAttribute("post", postDao.getById(id));
+        return "posts/show";
+    }
+
+    @GetMapping("/posts/{id}/edit")
+    public String editForm(@PathVariable long id, Model model) {
+        model.addAttribute("post", postDao.getById(id));
+        return "posts/editPost";
+    }
+
+    @PostMapping("/posts/{id}/edit")
+    public String editPost(@PathVariable long id, @ModelAttribute Post post ) {
+        return createPost(post);
+    }
+
+    @PostMapping("/posts/delete/{id}")
+    public String deletePost(@PathVariable long id) {
+        postDao.delete(postDao.getById(id));
+        return "redirect:/posts";
+    }
+
 
     @GetMapping("/posts/create")
     public String showCreateForm(Model model){
+        model.addAttribute("post", new Post());
         return "posts/create";
     }
 
     //create a post
     @PostMapping("/posts/create")
-    public String createPost(@RequestParam String title, @RequestParam String body){
-        User user = userDao.getById(1L);
-        Post post = new Post(title, body, user);
+    public String createPost(@ModelAttribute Post post){
+        post.setUser(userDao.getById(1L));
         postDao.save(post);
+        emailDao.prepareAndSend(post, "Post submitted!", "Post title: " + post.getTitle() + "\nPost body: " + post.getBody());
         return "redirect:/posts";
     }
 
-    //postMapping for delete
-    @PostMapping("/post/delete")
-    public String deletePost(@RequestParam("deletePost") long id){
-        postDao.deleteById(id);
-        return "redirect:/posts";
-    }
 
-    //get the post
-    @GetMapping("post/edit")
-    public String editPost(@RequestParam("editPost") long id, Model model){
-        model.addAttribute("post", postDao.findById(id));
-        return "/posts/editPost";
-    }
-
-    @PostMapping("/post/edit")
-    public String editPost(@RequestParam("postId") long postId, @RequestParam("postTitle") String title, @RequestParam("postBody") String body){
-//        Post post = new Post(postId, title, body);
-//        postDao.save(post);
-        return "redirect:/posts";
-    }
-
-//    @GetMapping("/join")
-//    public String showJoinForm(){
-//        return "join";
-//    }
-//
-//    @PostMapping("/join")
-//    public String joinCohort(@RequestParam(name = "cohort") String cohort, Model model){
-//        model.addAttribute("cohort", "Welcome to " + cohort + "!");
-//        return "join";
-//    }
-
-//    @GetMapping("/posts/{id}")
-//    @ResponseBody
-//    public String viewPost(@PathVariable long id){
-//        return "Viewing a post with the id of: " + String.valueOf(id);
-//    }
-//
-//    @GetMapping("/posts/create")
-//    @ResponseBody
-//    public String createPost(){
-//        return "view the post forum.";
-//    }
-//
-//    @PostMapping("posts/create")
-//    @ResponseBody
-//    public String submitPost(){
-//        return "Create a new post";
-//    }
 
 }
