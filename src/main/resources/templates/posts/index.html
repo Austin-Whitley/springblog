@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--Add this to use Authentication-->
+<!--xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"-->
 <head>
     <meta charset="UTF-8">
     <title>All Posts</title>
+<!--    Nav bar links can be removed based on whether or not a user is logged in
+        <li sec:authorize="isAuthenticated()"><a href="">Log-In</a></li>>-->
 </head>
 <body>
     <h1>viewing all the posts</h1>

@@ -1,13 +1,17 @@
 package com.codeup.springblog.controllers;
 
 import com.codeup.springblog.models.Post;
-import com.codeup.springblog.models.PostRepository;
 import com.codeup.springblog.models.User;
-import com.codeup.springblog.models.UserRepository;
+import com.codeup.springblog.repositories.PostRepository;
+import com.codeup.springblog.repositories.UserRepository;
 import com.codeup.springblog.services.EmailService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import javax.persistence.EntityNotFoundException;
+import javax.print.attribute.standard.PresentationDirection;
 
 @Controller
 public class PostController {
@@ -28,15 +32,32 @@ public class PostController {
     }
 
     @GetMapping("/posts/{id}")
-    public String singlePost(@PathVariable long id, Model model) {
-        model.addAttribute("post", postDao.getById(id));
-        return "posts/show";
+    public String singlePost(@PathVariable long id, Model model) throws EntityNotFoundException {
+        try {
+            Post post = postDao.getById(id);
+            boolean isPostOwner = false;
+            if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() != "anonymousUser") {
+                User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+                isPostOwner = currentUser.getId() == post.getUser().getId();
+            }
+            model.addAttribute("post", post);
+            model.addAttribute("isPostOwner", isPostOwner);
+            return "posts/show";
+        }catch(EntityNotFoundException enf){
+            return "redirect:/posts";
+        }
     }
 
     @GetMapping("/posts/{id}/edit")
     public String editForm(@PathVariable long id, Model model) {
-        model.addAttribute("post", postDao.getById(id));
-        return "posts/editPost";
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Post post = postDao.getById(id);
+        if(currentUser.getId() == post.getUser().getId()){
+            model.addAttribute("post", post);
+            return "posts/editPost";
+        }else{
+            return  "redirect:/posts/" + id;
+        }
     }
 
     @PostMapping("/posts/{id}/edit")
@@ -53,14 +74,19 @@ public class PostController {
 
     @GetMapping("/posts/create")
     public String showCreateForm(Model model){
-        model.addAttribute("post", new Post());
-        return "posts/create";
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if(currentUser != null){
+            model.addAttribute("post", new Post());
+            return "posts/create";
+        }
+        return "redirect:/posts";
     }
 
     //create a post
     @PostMapping("/posts/create")
     public String createPost(@ModelAttribute Post post){
-        post.setUser(userDao.getById(1L));
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        post.setUser(currentUser);
         postDao.save(post);
         emailDao.prepareAndSend(post, "Post submitted!", "Post title: " + post.getTitle() + "\nPost body: " + post.getBody());
         return "redirect:/posts";
