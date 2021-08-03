@@ -1,5 +1,6 @@
 package com.codeup.springblog.repositories;
 
+import com.codeup.springblog.models.Ad;
 import com.codeup.springblog.models.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +14,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 //    Post findPostById(String title, String body, long id);
 
     Post save(Post p);
+
+    @Query("from Post p where p.title like %:term%")
+    Post findByTitle(String term);
 
 
 }
